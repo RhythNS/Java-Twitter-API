@@ -1,25 +1,25 @@
 package everyst.analytics.listner.webhook;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Queue;
 import org.json.JSONObject;
 
 import everyst.analytics.listner.App;
 import everyst.analytics.listner.KeyManager;
-import everyst.analytics.listner.dataManagement.queueWriter.Type;
+import everyst.analytics.listner.dataManagement.Logger;
 import fi.iki.elonen.NanoHTTPD;
 
 public class Webhook extends NanoHTTPD {
 
 	private CRCResponse crcResponse;
-	private Queue<String> jsonQueue;
-	private App app;
+	private Queue<Entry<String, String>> jsonQueue;
 
-	public Webhook(Queue<String> jsonQueue, KeyManager keymanager, App app) {
+	public Webhook(Queue<Entry<String, String>> jsonQueue, KeyManager keymanager) {
 		// Init the Webhook with the Server Hostname and port
 		super(WebConstants.HOSTNAME, WebConstants.PORT);
-		this.app = app;
 
 		this.jsonQueue = jsonQueue;
 		crcResponse = new CRCResponse(keymanager);
@@ -34,9 +34,6 @@ public class Webhook extends NanoHTTPD {
 
 	public void start(String password) throws IOException {
 		// Passes keystore.jks which should be next to the jar to Nanohttpd
-
-//		String protocols[] = {"TLSv1.2", "TLSv1.1", "TLSv1"};
-
 		makeSecure(NanoHTTPD.makeSSLSocketFactory("/keystore.jks", password.toCharArray()), null);
 
 		// Start the internal server thread
@@ -45,23 +42,35 @@ public class Webhook extends NanoHTTPD {
 
 	@Override
 	public Response serve(IHTTPSession session) {
-		Map<String, String> parameters = session.getParms();
 
 		// check if the parameters contain a crc challenge parameter
+		Map<String, String> parameters = session.getParms();
 		Object crc = parameters.get(WebConstants.CRC_TOKEN_REQUEST_PARAMETER_KEY);
 		if (crc != null) // is a crc challenge -> return the answer
 			return doCRCCheck((String) crc);
 
-		for (String string : parameters.values()) {
-			jsonQueue.add(string);
-		}
+		// If it was a post or put method get the content
+		Map<String, String> files = new HashMap<String, String>();
+		Method method = session.getMethod();
+		if (Method.PUT.equals(method) || Method.POST.equals(method)) { // is put or put method
+			try {
+				session.parseBody(files);
+			} catch (IOException | ResponseException ioe) {
+				Logger.getInstance().handleError(ioe);
+			}
+		} // end post or put method
 
-		if (App.DEBUG)
-			System.out.println(parameters.toString());
+		// iterate through the content and add them to the queue to be procesed
+		for (Entry<String, String> entry : files.entrySet()) {
+			jsonQueue.add(entry);
+		}
 
 		return SampleResponses.getOkay();
 	}
 
+	/**
+	 * Response for the twitter crc challenge
+	 */
 	private Response doCRCCheck(String token) {
 		if (!(token instanceof String)) {
 			return SampleResponses.getInternalError();
@@ -75,7 +84,8 @@ public class Webhook extends NanoHTTPD {
 		JSONObject response = new JSONObject();
 		response.put(WebConstants.CRC_TOKEN_RESPONSE_PARAMETER_KEY, crcResponce);
 
-		return NanoHTTPD.newFixedLengthResponse(NanoHTTPD.Response.Status.OK, NanoHTTPD.MIME_PLAINTEXT, response.toString());
+		return NanoHTTPD.newFixedLengthResponse(NanoHTTPD.Response.Status.OK, NanoHTTPD.MIME_PLAINTEXT,
+				response.toString());
 	}
 
 }

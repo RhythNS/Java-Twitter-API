@@ -2,65 +2,84 @@ package everyst.analytics.listner.dataManagement.queueWriter;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Date;
+
+import com.google.common.io.Files;
 
 import everyst.analytics.listner.dataManagement.Logger;
 
 public class FileManager {
 
 	/**
-	 * The Structure of this File is [Type][old/new]. old is 0 and new is 1.
-	 */
-	private File[] files;
-	/**
 	 * How many times the file was stuff written to
 	 */
-	private int[] timesWrittenTo;
-	private File root;
+	private File root, activeFile;
+	private final String activeName = "active";
 
 	public FileManager(File root) {
 		this.root = root;
-		files = FileManagerInit.init(root);
+		root.mkdirs();
 
-		timesWrittenTo = new int[files.length];
+		activeFile = new File(root, activeName);
+		if (activeFile.exists()) {
+			moveActiveToOld();
+			try {
+				activeFile.createNewFile();
+			} catch (IOException e) {
+				Logger.getInstance().log("Could not create File for FileManager");
+				Logger.getInstance().handleError(e);
+				System.exit(0);
+			}
+		}
 	}
 
-	public File getFile(Type type) {
-		if (timesWrittenTo[type.number]++ > FileConstants.QUEUE_WRITER_TIMES_UNTIL_FILE_NEEDS_CLEANING)
-			moveFileToOld(type);
-		return files[type.number];
+	public File getFile() {
+		synchronized (this) {
+			if (activeFile.length() > FileConstants.QUEUE_BYTES_UNTIL_FILE_NEEDS_CLEANING) {
+				moveActiveToOld();
+				try {
+					activeFile.createNewFile();
+				} catch (IOException e) {
+					Logger.getInstance().log("Could not create active File. Nothing is being logged anymore!");
+					Logger.getInstance().handleError(e);
+				}
+			}
+			return activeFile;
+		}
 	}
 
 	/**
 	 * Moves the current File to the old files
 	 */
-	public void moveFileToOld(Type type) {
-		synchronized (files[type.number]) {
-			// move the file to the other potential logs
-			if (!FileManagerInit.moveFile(files[type.number], new File(root, type.path), false)) {
-				Logger.getInstance().log("Could not move the newest File to the old ones. Ignoring the request!");
-				return;
-			}
-
-			// create a new file for the objects to be written in
-			try {
-				files[type.number].createNewFile();
-			} catch (IOException e) {
-				Logger.getInstance().log("Fatal error. Could not create new file. Every try to log will now fail!");
-				Logger.getInstance().handleError(e);
-			}
-
-			// Reset the clean number
-			timesWrittenTo[type.number] = 0;
+	public void moveActiveToOld() {
+		try {
+			// rename the active file to a name which is unique
+			Files.move(activeFile, new File(root, new Date().getTime() + ""));
+			activeFile.createNewFile();
+		} catch (IOException e) {
+			Logger.getInstance().handleError(e);
 		}
 	}
 
 	/**
 	 * Moves the current File to the old file and returns all old files
 	 */
-	public File[] getAllOldFiles(Type type) {
-		// Move the newest file to the old ones first
-		moveFileToOld(type);
-		return new File(root, type.path).listFiles();
+	public ArrayList<File> getAllOldFiles() {
+		synchronized (this) {
+			// first move the current file to the old ones so we get everything in one go
+			moveActiveToOld();
+
+			File[] fileArray = root.listFiles();
+
+			// iterate through the files and remove the current file
+			ArrayList<File> files = new ArrayList<>();
+			for (int i = 0; i < fileArray.length; i++) {
+				if (!fileArray[i].getName().equals(activeName)) // if file is currentFile
+					files.add(fileArray[i]);
+			}
+			return files;
+		}
 	}
 
 }

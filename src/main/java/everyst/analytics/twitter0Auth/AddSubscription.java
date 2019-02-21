@@ -16,21 +16,22 @@ import everyst.analytics.listner.dataManagement.queueWriter.FileConstants;
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
 
-public abstract class Auth {
+/**
+ * Taken from
+ * https://github.com/scribejava/scribejava/blob/master/scribejava-apis/src/test/java/com/github/scribejava/apis/examples/TwitterExample.javas
+ */
+public abstract class AddSubscription {
 
-	private static final String PROTECTED_RESOURCE_URL = "https://api.twitter.com/1.1/account/verify_credentials.json";
+	private static final String PROTECTED_RESOURCE_URL = "https://api.twitter.com/1.1/account_activity/all/prod/subscriptions.json";
 
 	public static void main(String... args) throws IOException, InterruptedException, ExecutionException {
+		// Read api key
 		KeyManager key = new KeyManager();
 		key.readKeys(FileConstants.KEY_FILE);
-		
-			
+
 		final OAuth10aService service = new ServiceBuilder(key.getConsumerKey()).apiSecret(key.getConsumerSecret())
 				.build(TwitterApi.instance());
 		final Scanner in = new Scanner(System.in);
-
-		System.out.println("=== Twitter's OAuth Workflow ===");
-		System.out.println();
 
 		// Obtain the Request Token
 		System.out.println("Fetching the Request Token...");
@@ -54,7 +55,7 @@ public abstract class Auth {
 
 		// Now let's go and ask for a protected resource!
 		System.out.println("Now we're going to access a protected resource...");
-		final OAuthRequest request = new OAuthRequest(Verb.GET, PROTECTED_RESOURCE_URL);
+		final OAuthRequest request = new OAuthRequest(Verb.POST, PROTECTED_RESOURCE_URL);
 		service.signRequest(accessToken, request);
 		final Response response = service.execute(request);
 		System.out.println("Got it! Lets see what we found...");
@@ -64,5 +65,6 @@ public abstract class Auth {
 		System.out.println();
 		System.out.println("That's it man! Go and build something awesome with ScribeJava! :)");
 		in.close();
+
 	}
 }

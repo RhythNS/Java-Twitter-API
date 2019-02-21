@@ -47,6 +47,7 @@ public class Logger {
 	 */
 	public void log(String toLog) {
 		// Check if the writer or the string is null
+		System.out.println(toLog);
 		if (writer != null && toLog != null && !toLog.isEmpty()) {
 
 			// Create the string for logging

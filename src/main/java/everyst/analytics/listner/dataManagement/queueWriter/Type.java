@@ -1,7 +1,7 @@
 package everyst.analytics.listner.dataManagement.queueWriter;
 
 public enum Type {
-	NOT_CONNECTED(0, "NotConnected"), ERROR(1, "Error"), EXIT(2, "Exit"), FULL(3, "Full"), DEBUG(4, "Debug");
+	NOT_CONNECTED(0, "NotConnected"), ERROR(1, "Error"), EXIT(2, "Exit"), FULL(3, "Full"), DEBUG(4, "Debug"), ALL(5, "All");
 
 	int number;
 	String path;
