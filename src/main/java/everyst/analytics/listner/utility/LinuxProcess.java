@@ -1,4 +1,4 @@
-package everyst.analytics.smallHelpers.utils;
+package everyst.analytics.listner.utility;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -6,7 +6,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.stream.Collectors;
 
-import everyst.analytics.smallHelpers.twitterFollowerTracker.Logger;
+import everyst.analytics.listner.dataManagement.Logger;
 
 public class LinuxProcess {
 

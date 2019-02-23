@@ -60,7 +60,7 @@ public class Webhook extends NanoHTTPD {
 			}
 		} // end post or put method
 
-		// iterate through the content and add them to the queue to be procesed
+		// iterate through the content and add them to the queue to be processed
 		for (Entry<String, String> entry : files.entrySet()) {
 			jsonQueue.add(entry);
 		}

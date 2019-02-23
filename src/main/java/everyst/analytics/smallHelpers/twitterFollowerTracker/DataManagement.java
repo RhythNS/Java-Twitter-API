@@ -8,6 +8,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 
+import everyst.analytics.listner.dataManagement.Logger;
+
 public class DataManagement {
 
 	private File currentIds, unFollowers, newFollowers;

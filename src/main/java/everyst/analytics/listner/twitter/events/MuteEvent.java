@@ -1,5 +1,44 @@
 package everyst.analytics.listner.twitter.events;
 
-public class MuteEvent {
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import everyst.analytics.listner.dataManagement.Logger;
+import everyst.analytics.listner.parser.EventParser;
+import everyst.analytics.listner.twitter.User;
+
+public class MuteEvent extends Event{
+
+	private User source, target;
+	
+	public MuteEvent(String data, JSONObject JSON) {
+		super(data);
+
+		JSONObject sourceJSON, targetJSON;
+		try {
+			sourceJSON = JSON.getJSONObject("source");
+			targetJSON = JSON.getJSONObject("target");
+		} catch (JSONException e) {
+			Logger.getInstance().handleError(e);
+			errorOccured();
+			return;
+		}
+
+		source = EventParser.getUserObject(sourceJSON);
+		if (source == null) {
+			errorOccured();
+			return;
+		}
+
+		target = EventParser.getUserObject(targetJSON);
+		if (target == null)
+			errorOccured();
+	}
+
+	@Override
+	public String getQuery() {
+		// TODO Auto-generated method stub
+		return null;
+	}
 
 }

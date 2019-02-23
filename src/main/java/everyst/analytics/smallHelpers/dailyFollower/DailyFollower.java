@@ -11,11 +11,11 @@ import java.util.TreeMap;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import everyst.analytics.listner.dataManagement.Logger;
+import everyst.analytics.listner.utility.JSONUtil;
+import everyst.analytics.listner.utility.LinuxProcess;
 import everyst.analytics.mysql.MySQLConnection;
 import everyst.analytics.mysql.MySQLDate;
-import everyst.analytics.smallHelpers.twitterFollowerTracker.Logger;
-import everyst.analytics.smallHelpers.utils.FileToJSON;
-import everyst.analytics.smallHelpers.utils.LinuxProcess;
 
 public class DailyFollower {
 
@@ -30,7 +30,7 @@ public class DailyFollower {
 	}
 
 	public void readFile(File file) throws NumberFormatException, IOException {
-		JSONObject json = FileToJSON.convert(file);
+		JSONObject json = JSONUtil.convert(file);
 		database = json.getString("database");
 		user = json.getString("user");
 		password = json.getString("password");

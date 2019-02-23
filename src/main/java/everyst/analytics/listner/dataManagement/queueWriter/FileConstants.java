@@ -7,7 +7,7 @@ public interface FileConstants {
 	public final static boolean DEBUG = true;
 
 	public final static File ROOT_DATA_MANAGEMENT_FILE = initRoot("data");
-	public final static File LOG_FILE = new File(ROOT_DATA_MANAGEMENT_FILE, "log.txt");
+	public final static File LOG_FILE = new File("log.txt");
 	public static final File KEY_FILE = new File(ROOT_DATA_MANAGEMENT_FILE, "keys");
 	public static final File KEYSTORE_FILE = new File(ROOT_DATA_MANAGEMENT_FILE, "keystore.jks");
 	public final static File QUEUE_WRITER_FILE = new File(ROOT_DATA_MANAGEMENT_FILE, "queueWriterFile");

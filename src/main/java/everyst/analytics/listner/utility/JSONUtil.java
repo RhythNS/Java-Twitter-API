@@ -1,12 +1,15 @@
-package everyst.analytics.smallHelpers.utils;
+package everyst.analytics.listner.utility;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+
+import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
-public class FileToJSON {
+public class JSONUtil {
 
 	/**
 	 * Converts a File to a JSON Object
@@ -21,6 +24,14 @@ public class FileToJSON {
 		}
 		br.close();
 		return new JSONObject(sb.toString());
+	}
+
+	public static JSONArray getArray(String key, JSONObject json) {
+		try {
+			return json.getJSONArray(key);
+		} catch (JSONException e) {
+			return null;
+		}
 	}
 
 }

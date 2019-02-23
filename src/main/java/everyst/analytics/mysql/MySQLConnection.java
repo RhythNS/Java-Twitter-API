@@ -6,7 +6,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
-import everyst.analytics.smallHelpers.twitterFollowerTracker.Logger;
+import everyst.analytics.listner.dataManagement.Logger;
+
 
 public class MySQLConnection {
 

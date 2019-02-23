@@ -2,22 +2,63 @@ package everyst.analytics.listner.parser;
 
 import java.time.DateTimeException;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import everyst.analytics.listner.dataManagement.Logger;
 import everyst.analytics.listner.twitter.Tweet;
 import everyst.analytics.listner.twitter.TweetEngagement;
 import everyst.analytics.listner.twitter.User;
+import everyst.analytics.listner.twitter.events.BlockEvent;
 import everyst.analytics.listner.twitter.events.Event;
+import everyst.analytics.listner.twitter.events.FavoriteEvent;
+import everyst.analytics.listner.twitter.events.FollowEvent;
+import everyst.analytics.listner.twitter.events.MuteEvent;
+import everyst.analytics.listner.twitter.events.TweetCreateEvent;
+import everyst.analytics.listner.twitter.events.TweetDeleteEvent;
+import everyst.analytics.listner.utility.JSONUtil;
 import everyst.analytics.listner.utility.TimeUtility;
 
 public abstract class EventParser {
 
-	public static Event parse(String json) {
-		return null; //TODO
+	public static void addAll(ArrayList<Event> events, String json) {
+		JSONObject base = new JSONObject(json);
+
+		JSONArray array = JSONUtil.getArray("favorited_status", base);
+		if (array != null)
+			for (int i = 0; i < array.length(); i++)
+				events.add(new FavoriteEvent(json, base));
+
+		array = JSONUtil.getArray("follow_events", base);
+		if (array != null)
+			for (int i = 0; i < array.length(); i++)
+				events.add(new FollowEvent(json, base));
+
+		array = JSONUtil.getArray("block_events", base);
+		if (array != null)
+			for (int i = 0; i < array.length(); i++)
+				events.add(new BlockEvent(json, base));
+
+		array = JSONUtil.getArray("mute_events", base);
+		if (array != null)
+			for (int i = 0; i < array.length(); i++)
+				events.add(new MuteEvent(json, base));
+
+		array = JSONUtil.getArray("tweet_delete_events", base);
+		if (array != null)
+			for (int i = 0; i < array.length(); i++)
+				events.add(new TweetDeleteEvent(json, base));
+
+		array = JSONUtil.getArray("tweet_create_events", base);
+		if (array != null)
+			for (int i = 0; i < array.length(); i++)
+				events.add(new TweetCreateEvent(json, base));
+
 	}
 
-	private static Tweet getTweetObject(JSONObject json) {
+	public static Tweet getTweetObject(JSONObject json) {
 		TweetEngagement engagement = getTweetEngagementObject(json);
 		if (engagement == null)
 			return null;
@@ -36,7 +77,7 @@ public abstract class EventParser {
 		try {
 			createdAt = TimeUtility.parseFromApi(createdAtString);
 		} catch (DateTimeException e) {
-			Logger.getInstance().log("Event Parser: Could parse created_at from tweet!");
+			Logger.getInstance().log("Event Parser: not Could parse created_at from tweet!");
 			return null;
 		}
 		String text = json.getString("text");
@@ -47,7 +88,7 @@ public abstract class EventParser {
 		return new Tweet(id, createdAt, text, engagement);
 	}
 
-	private static TweetEngagement getTweetEngagementObject(JSONObject json) {
+	public static TweetEngagement getTweetEngagementObject(JSONObject json) {
 		String impressions = json.getString("impressions");
 		if (impressions == null) {
 			Logger.getInstance().log("Event Parser: Could not get id_str from tweet engagement!");
@@ -81,7 +122,7 @@ public abstract class EventParser {
 		return new TweetEngagement(impressions, engagements, quoteCount, replyCount, retweetCount, favoriteCount);
 	}
 
-	private static User getUserObject(JSONObject json) {
+	public static User getUserObject(JSONObject json) {
 		String id = json.getString("id_str");
 		if (id == null) {
 			Logger.getInstance().log("Event Parser: Could not get id_str from user!");
