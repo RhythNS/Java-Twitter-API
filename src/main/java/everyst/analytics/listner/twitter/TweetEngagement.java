@@ -2,21 +2,35 @@ package everyst.analytics.listner.twitter;
 
 public class TweetEngagement {
 
-	String impressions;
-	String engagements;
-	String quoteCount;
-	String replyCount;
-	String retweetCount;
-	String favoriteCount;
+	private String quoteCount;
+	private String replyCount;
+	private String retweetCount;
+	private String favoriteCount;
 
-	public TweetEngagement(String impressions, String engagements, String quoteCount, String replyCount, String retweetCount,
+	public TweetEngagement(String quoteCount, String replyCount, String retweetCount,
 			String favoriteCount) {
-		this.impressions = impressions;
-		this.engagements = engagements;
 		this.quoteCount = quoteCount;
 		this.replyCount = replyCount;
 		this.retweetCount = retweetCount;
 		this.favoriteCount = favoriteCount;
 	}
+
+	public String getQuoteCount() {
+		return quoteCount;
+	}
+
+	public String getReplyCount() {
+		return replyCount;
+	}
+
+	public String getRetweetCount() {
+		return retweetCount;
+	}
+
+	public String getFavoriteCount() {
+		return favoriteCount;
+	}
+	
+	
 
 }

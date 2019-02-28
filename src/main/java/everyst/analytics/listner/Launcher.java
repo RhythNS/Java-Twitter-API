@@ -9,7 +9,7 @@ public class Launcher {
 			if (args[i].equalsIgnoreCase("ct"))
 				createTables = true;
 		}
-
+		
 		new App(createTables);
 	}
 

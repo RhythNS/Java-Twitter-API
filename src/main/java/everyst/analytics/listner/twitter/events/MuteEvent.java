@@ -1,16 +1,21 @@
 package everyst.analytics.listner.twitter.events;
 
+import java.sql.SQLException;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import everyst.analytics.listner.dataManagement.Logger;
 import everyst.analytics.listner.parser.EventParser;
 import everyst.analytics.listner.twitter.User;
+import everyst.analytics.listner.twitter.database.DatabaseConstants;
+import everyst.analytics.mysql.MySQLConnection;
 
-public class MuteEvent extends Event{
+public class MuteEvent extends Event {
 
 	private User source, target;
-	
+	private long time;
+
 	public MuteEvent(String data, JSONObject JSON) {
 		super(data);
 
@@ -18,6 +23,7 @@ public class MuteEvent extends Event{
 		try {
 			sourceJSON = JSON.getJSONObject("source");
 			targetJSON = JSON.getJSONObject("target");
+			time = JSON.getLong("created_timestamp");
 		} catch (JSONException e) {
 			Logger.getInstance().handleError(e);
 			errorOccured();
@@ -36,9 +42,8 @@ public class MuteEvent extends Event{
 	}
 
 	@Override
-	public String getQuery() {
-		// TODO Auto-generated method stub
-		return null;
+	public void doTransaction(MySQLConnection database) throws SQLException {
+		EventUtil.userUserInteraction(database, source, target, time, DatabaseConstants.MUTE);
 	}
 
 }

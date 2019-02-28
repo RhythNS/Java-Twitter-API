@@ -15,8 +15,8 @@ public class StringWriter {
 	}
 
 	public void write(String string, Type type) {
-		File file = stringFileManager.getFile();
-		synchronized (file) {
+		synchronized (stringFileManager) {
+			File file = stringFileManager.getFile();
 			try {
 				// Build the string
 				StringBuilder sb = new StringBuilder();
@@ -24,7 +24,7 @@ public class StringWriter {
 				sb.append(FileConstants.QUEUE_TYPE_SEPERATOR);
 				sb.append(string);
 				sb.append(FileConstants.QUEUE_LINE_SEPERATOR);
-				
+
 				// Write the string
 				BufferedWriter bw = new BufferedWriter(new FileWriter(file, true));
 				bw.write(sb.toString());

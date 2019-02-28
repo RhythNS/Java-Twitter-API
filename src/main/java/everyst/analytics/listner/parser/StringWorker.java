@@ -1,9 +1,10 @@
 package everyst.analytics.listner.parser;
 
 import java.util.ArrayList;
-import java.util.Map.Entry;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
+
+import org.json.JSONException;
 
 import everyst.analytics.listner.App;
 import everyst.analytics.listner.dataManagement.Logger;
@@ -12,26 +13,32 @@ import everyst.analytics.listner.dataManagement.queueWriter.Type;
 import everyst.analytics.listner.twitter.events.Event;
 import everyst.analytics.listner.utility.QueueWorker;
 
-public class StringWorker extends QueueWorker<Entry<String, String>> {
+public class StringWorker extends QueueWorker<String> {
 
 	private BlockingQueue<Event> eventQueue;
 	private ArrayList<Event> parsedEvents;
 
-	public StringWorker(BlockingQueue<Entry<String, String>> msqQueue, BlockingQueue<Event> eventQueue, App app,
+	public StringWorker(BlockingQueue<String> stringQueue, BlockingQueue<Event> eventQueue, App app,
 			StringWriter writer, long delay) {
-		super(msqQueue, app, writer, delay);
+		super(stringQueue, app, writer, delay);
 		this.eventQueue = eventQueue;
 		parsedEvents = new ArrayList<>();
 	}
 
 	@Override
-	protected void process(Entry<String, String> json) {
+	protected void process(String json) {
 		// Parse the json to an event
-
-		EventParser.addAll(parsedEvents, json.getValue());
+		
+		try {
+			EventParser.addAll(parsedEvents, json);	
+		} catch (JSONException e) {
+			Logger.getInstance().handleError(e);
+			writeToFile(json, Type.ERROR);
+			return;
+		}
 
 		// if the event is unknown write it to file to inspect it later
-		while (!eventQueue.isEmpty()) {
+		while (!parsedEvents.isEmpty()) {
 			Event parsedEvent = parsedEvents.remove(0);
 
 			if (parsedEvent.isError()) // If the event was unknown or an error occurred
@@ -55,8 +62,9 @@ public class StringWorker extends QueueWorker<Entry<String, String>> {
 	}
 
 	@Override
-	protected void writeToFile(Entry<String, String> x, Type type) {
-		writer.write(x.getValue(), type);
+	protected void writeToFile(String x, Type type) {
+		writer.write(x, type);
 	}
+
 
 }

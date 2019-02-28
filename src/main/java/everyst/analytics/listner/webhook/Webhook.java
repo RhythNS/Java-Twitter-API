@@ -5,6 +5,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Queue;
+import java.util.concurrent.BlockingQueue;
+
 import org.json.JSONObject;
 
 import everyst.analytics.listner.App;
@@ -15,13 +17,13 @@ import fi.iki.elonen.NanoHTTPD;
 public class Webhook extends NanoHTTPD {
 
 	private CRCResponse crcResponse;
-	private Queue<Entry<String, String>> jsonQueue;
+	private Queue<String> jsonQueue;
 
-	public Webhook(Queue<Entry<String, String>> jsonQueue, KeyManager keymanager) {
+	public Webhook(BlockingQueue<String> stringQueue, KeyManager keymanager) {
 		// Init the Webhook with the Server Hostname and port
 		super(WebConstants.HOSTNAME, WebConstants.PORT);
 
-		this.jsonQueue = jsonQueue;
+		this.jsonQueue = stringQueue;
 		crcResponse = new CRCResponse(keymanager);
 
 		// Enable required SSLProtocols
@@ -42,7 +44,6 @@ public class Webhook extends NanoHTTPD {
 
 	@Override
 	public Response serve(IHTTPSession session) {
-
 		// check if the parameters contain a crc challenge parameter
 		Map<String, String> parameters = session.getParms();
 		Object crc = parameters.get(WebConstants.CRC_TOKEN_REQUEST_PARAMETER_KEY);
@@ -62,7 +63,7 @@ public class Webhook extends NanoHTTPD {
 
 		// iterate through the content and add them to the queue to be processed
 		for (Entry<String, String> entry : files.entrySet()) {
-			jsonQueue.add(entry);
+			jsonQueue.add(entry.getValue());
 		}
 
 		return SampleResponses.getOkay();

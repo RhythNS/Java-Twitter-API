@@ -1,8 +1,6 @@
 package everyst.analytics.listner.twitter;
 
-import everyst.analytics.listner.utility.MySQLable;
-
-public class User implements MySQLable {
+public class User {
 
 	private String id;
 	private String screenName;
@@ -14,10 +12,16 @@ public class User implements MySQLable {
 		this.followersCount = followersCount;
 	}
 
-	@Override
-	public String getQuery() {
-		// TODO Auto-generated method stub
-		return null;
+	public String getId() {
+		return id;
+	}
+
+	public String getScreenName() {
+		return screenName;
+	}
+
+	public String getFollowersCount() {
+		return followersCount;
 	}
 
 }

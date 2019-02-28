@@ -2,14 +2,15 @@ package everyst.analytics.listner;
 
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.Map.Entry;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import everyst.analytics.listner.dataManagement.Logger;
 import everyst.analytics.listner.dataManagement.queueWriter.FileConstants;
 import everyst.analytics.listner.dataManagement.queueWriter.FileManager;
+import everyst.analytics.listner.dataManagement.queueWriter.StringReader;
 import everyst.analytics.listner.dataManagement.queueWriter.StringWriter;
+import everyst.analytics.listner.dataManagement.queueWriter.Type;
 import everyst.analytics.listner.parser.EventWorker;
 import everyst.analytics.listner.parser.StringWorker;
 import everyst.analytics.listner.twitter.database.InitDatabase;
@@ -29,6 +30,7 @@ public class App {
 	// data
 	private KeyManager keyManager;
 	private StringWriter writer;
+	private StringReader reader;
 	private FileManager fileManager;
 
 	private MySQLConnection database;
@@ -56,19 +58,20 @@ public class App {
 			Logger.getInstance().handleError(e1);
 			System.exit(0);
 		}
-		
+
 		if (createTables) // if the user wants to create the tables in the database
 			if (!InitDatabase.init(database)) { // could not create the tables
 				System.exit(0);
 			}
 
 		// init the queues
-		BlockingQueue<Entry<String, String>> stringQueue = new LinkedBlockingQueue<>();
+		BlockingQueue<String> stringQueue = new LinkedBlockingQueue<>();
 		BlockingQueue<Event> eventQueue = new LinkedBlockingQueue<>();
 
 		// init the file stuff
 		fileManager = new FileManager(FileConstants.QUEUE_WRITER_FILE);
 		writer = new StringWriter(fileManager);
+		reader = new StringReader(fileManager, writer, stringQueue);
 
 		// Init the webhook
 		webhook = new Webhook(stringQueue, keyManager);
@@ -90,6 +93,8 @@ public class App {
 		new Thread(ui).start();
 
 		System.out.println("started!");
+
+		reader.addAllStrings(Type.ALL, 0);
 	}
 
 	/**

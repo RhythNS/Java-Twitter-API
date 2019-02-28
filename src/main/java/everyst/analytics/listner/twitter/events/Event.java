@@ -1,8 +1,10 @@
 package everyst.analytics.listner.twitter.events;
 
-import everyst.analytics.listner.utility.MySQLable;
+import java.sql.SQLException;
 
-public abstract class Event implements MySQLable {
+import everyst.analytics.mysql.MySQLConnection;
+
+public abstract class Event {
 
 	private String data;
 	private boolean error;
@@ -11,6 +13,8 @@ public abstract class Event implements MySQLable {
 		this.data = data;
 		error = false;
 	}
+
+	public abstract void doTransaction(MySQLConnection database) throws SQLException;
 
 	/**
 	 * Returns the raw message gotten through the Webhook.

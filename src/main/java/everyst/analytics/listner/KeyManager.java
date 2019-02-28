@@ -13,8 +13,7 @@ import everyst.analytics.listner.dataManagement.Logger;
 
 public class KeyManager {
 
-	private String consumerKey, consumerSecret, token, tokenSecret, keyStorePassword, databaseName, databaseUser,
-			databasePassword;
+	private String consumerSecret, keyStorePassword, databaseName, databaseUser, databasePassword;
 
 	public boolean readKeys(File file) {
 		if (!file.exists()) {
@@ -43,17 +42,14 @@ public class KeyManager {
 		}
 
 		JSONObject json = new JSONObject(sb.toString());
-		consumerKey = json.getString("consumer_key");
 		consumerSecret = json.getString("consumer_secret");
-		token = json.getString("token");
-		tokenSecret = json.getString("token_secret");
 		keyStorePassword = json.getString("keystore_password");
 		databaseName = json.getString("database_name");
 		databaseUser = json.getString("database_user");
 		databasePassword = json.getString("database_password");
 
-		if (consumerKey == null || consumerSecret == null || token == null || tokenSecret == null
-				|| keyStorePassword == null) {
+		if (consumerSecret == null || keyStorePassword == null || databaseName == null || databaseUser == null
+				|| databasePassword == null) {
 			Logger.getInstance().log("KeyManager: One or more keys could not be read from the JSON");
 			return false;
 		}
@@ -65,9 +61,9 @@ public class KeyManager {
 		try {
 			file.createNewFile();
 			BufferedWriter write = new BufferedWriter(new FileWriter(file));
-			write.write("{\n" + "\"consumer_key\" : \"\",\n" + "\"consumer_secret\" : \"\",\n" + "\"token\" : \"\",\n"
-					+ "\"token_secret\" : \" \",\n" + "\"keystore_password\" : \"\"\n" + "\"database_name\" : \" \",\n"
-					+ "\"database_user\" : \" \",\n" + "\"database_password\" : \"\"\n" + "}");
+			write.write("{\n" + "\"consumer_secret\" : \"\",\n" + "\"keystore_password\" : \"\"\n"
+					+ "\"database_name\" : \" \",\n" + "\"database_user\" : \" \",\n" + "\"database_password\" : \"\"\n"
+					+ "}");
 			write.flush();
 			write.close();
 		} catch (IOException e) {
@@ -75,20 +71,8 @@ public class KeyManager {
 		}
 	}
 
-	public String getConsumerKey() {
-		return consumerKey;
-	}
-
 	public String getConsumerSecret() {
 		return consumerSecret;
-	}
-
-	public String getToken() {
-		return token;
-	}
-
-	public String getTokenSecret() {
-		return tokenSecret;
 	}
 
 	public String getKeyStorePassword() {

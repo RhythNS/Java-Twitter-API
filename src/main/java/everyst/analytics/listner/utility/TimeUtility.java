@@ -19,7 +19,7 @@ public class TimeUtility {
 	}
 
 	public static LocalDateTime parseFromApi(String time) throws DateTimeException {
-		return LocalDateTime.from(fromAPIParser.parse("Thu Apr 06 15:24:15 +0000 2017"));
+		return LocalDateTime.from(fromAPIParser.parse(time));
 	}
 
 	public static String parseToDatabase(LocalDateTime time) {

@@ -24,13 +24,14 @@ public class EventWorker extends QueueWorker<Event> {
 	@Override
 	protected void process(Event x) {
 		try {
-			database.execute(x.getQuery());
-			return;
+			synchronized (database) { // maybe not needed?
+				x.doTransaction(database);
+			}
 		} catch (SQLException e) {
+			e.printStackTrace();
 			Logger.getInstance().handleError(e);
+			writeToFile(x, Type.ERROR);
 		}
-		
-		writeToFile(x, Type.ERROR);
 	}
 
 	@Override

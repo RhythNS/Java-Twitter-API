@@ -1,144 +1,142 @@
 package everyst.analytics.listner.parser;
 
-import java.time.DateTimeException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
-import everyst.analytics.listner.dataManagement.Logger;
 import everyst.analytics.listner.twitter.Tweet;
 import everyst.analytics.listner.twitter.TweetEngagement;
 import everyst.analytics.listner.twitter.User;
 import everyst.analytics.listner.twitter.events.BlockEvent;
 import everyst.analytics.listner.twitter.events.Event;
+import everyst.analytics.listner.twitter.events.EventUtil;
 import everyst.analytics.listner.twitter.events.FavoriteEvent;
 import everyst.analytics.listner.twitter.events.FollowEvent;
 import everyst.analytics.listner.twitter.events.MuteEvent;
 import everyst.analytics.listner.twitter.events.TweetCreateEvent;
 import everyst.analytics.listner.twitter.events.TweetDeleteEvent;
 import everyst.analytics.listner.utility.JSONUtil;
-import everyst.analytics.listner.utility.TimeUtility;
 
 public abstract class EventParser {
 
 	public static void addAll(ArrayList<Event> events, String json) {
 		JSONObject base = new JSONObject(json);
 
-		JSONArray array = JSONUtil.getArray("favorited_status", base);
+		JSONArray array = null;
+		try {
+			array = JSONUtil.getArray("favorite_events", base);
+		} catch (JSONException e) {
+		}
 		if (array != null)
 			for (int i = 0; i < array.length(); i++)
-				events.add(new FavoriteEvent(json, base));
+				events.add(new FavoriteEvent(json, array.getJSONObject(i)));
+		
+		array = null;
+		try {
+			array = JSONUtil.getArray("follow_events", base);
+		} catch (JSONException e) {
+		}
 
-		array = JSONUtil.getArray("follow_events", base);
 		if (array != null)
 			for (int i = 0; i < array.length(); i++)
-				events.add(new FollowEvent(json, base));
+				events.add(new FollowEvent(json, array.getJSONObject(i)));
+		
+		array = null;
+		try {
+			array = JSONUtil.getArray("block_events", base);
+			if (array != null)
+				for (int i = 0; i < array.length(); i++)
+					events.add(new BlockEvent(json, array.getJSONObject(i)));
 
-		array = JSONUtil.getArray("block_events", base);
+		} catch (JSONException e) {
+		}
+		
+		array = null;
+		try {
+			array = JSONUtil.getArray("mute_events", base);
+		} catch (JSONException e) {
+		}
 		if (array != null)
 			for (int i = 0; i < array.length(); i++)
-				events.add(new BlockEvent(json, base));
-
-		array = JSONUtil.getArray("mute_events", base);
+				events.add(new MuteEvent(json, array.getJSONObject(i)));
+		
+		array = null;
+		try {
+			array = JSONUtil.getArray("tweet_delete_events", base);
+		} catch (JSONException e) {
+		}
 		if (array != null)
 			for (int i = 0; i < array.length(); i++)
-				events.add(new MuteEvent(json, base));
-
-		array = JSONUtil.getArray("tweet_delete_events", base);
+				events.add(new TweetDeleteEvent(json, array.getJSONObject(i)));
+		
+		array = null;
+		try {
+			array = JSONUtil.getArray("tweet_create_events", base);
+		} catch (JSONException e) {
+		}
 		if (array != null)
 			for (int i = 0; i < array.length(); i++)
-				events.add(new TweetDeleteEvent(json, base));
-
-		array = JSONUtil.getArray("tweet_create_events", base);
-		if (array != null)
-			for (int i = 0; i < array.length(); i++)
-				events.add(new TweetCreateEvent(json, base));
-
+				events.add(new TweetCreateEvent(json, array.getJSONObject(i)));
+		
+		if (events.isEmpty())
+			throw new JSONException("No events found!");
 	}
 
-	public static Tweet getTweetObject(JSONObject json) {
+	public static Tweet getTweetObject(JSONObject json) throws JSONException {
 		TweetEngagement engagement = getTweetEngagementObject(json);
 		if (engagement == null)
 			return null;
 
 		String id = json.getString("id_str");
-		if (id == null) {
-			Logger.getInstance().log("Event Parser: Could not get id_str from tweet!");
+
+		JSONObject userJson = json.getJSONObject("user");
+		User user = getUserObject(userJson);
+		if (user == null)
 			return null;
-		}
-		String createdAtString = json.getString("created_at");
-		if (createdAtString == null) {
-			Logger.getInstance().log("Event Parser: Could not get created_at from tweet!");
-			return null;
-		}
-		LocalDateTime createdAt = null;
-		try {
-			createdAt = TimeUtility.parseFromApi(createdAtString);
-		} catch (DateTimeException e) {
-			Logger.getInstance().log("Event Parser: not Could parse created_at from tweet!");
-			return null;
-		}
+
+		LocalDateTime createdAt = EventUtil.getTime(json, "created_at");
+		
 		String text = json.getString("text");
-		if (text == null) {
-			Logger.getInstance().log("Event Parser: Could not get text from tweet!");
-			return null;
-		}
-		return new Tweet(id, createdAt, text, engagement);
+		return new Tweet(id, user, createdAt, text, engagement);
 	}
 
-	public static TweetEngagement getTweetEngagementObject(JSONObject json) {
-		String impressions = json.getString("impressions");
-		if (impressions == null) {
-			Logger.getInstance().log("Event Parser: Could not get id_str from tweet engagement!");
-			return null;
-		}
-		String engagements = json.getString("engagements");
-		if (engagements == null) {
-			Logger.getInstance().log("Event Parser: Could not get engagements from tweet engagement!");
-			return null;
-		}
-		String quoteCount = json.getString("quote_count");
-		if (quoteCount == null) {
-			Logger.getInstance().log("Event Parser: Could not get quote_count from tweet engagement!");
-			return null;
-		}
-		String replyCount = json.getString("reply_count");
-		if (replyCount == null) {
-			Logger.getInstance().log("Event Parser: Could not get reply_count from tweet engagement!");
-			return null;
-		}
-		String retweetCount = json.getString("retweet_count");
-		if (retweetCount == null) {
-			Logger.getInstance().log("Event Parser: Could not get retweet_count from tweet engagement!");
-			return null;
-		}
-		String favoriteCount = json.getString("favorite_count");
-		if (favoriteCount == null) {
-			Logger.getInstance().log("Event Parser: Could not get favorite_count from tweet engagement!");
-			return null;
-		}
-		return new TweetEngagement(impressions, engagements, quoteCount, replyCount, retweetCount, favoriteCount);
+	public static TweetEngagement getTweetEngagementObject(JSONObject json) throws JSONException {
+		String quoteCount = Long.toString(json.getLong("quote_count"));
+		String replyCount = Long.toString(json.getLong("reply_count"));
+		String retweetCount = Long.toString(json.getLong("retweet_count"));
+		String favoriteCount = Long.toString(json.getLong("favorite_count"));
+		return new TweetEngagement(quoteCount, replyCount, retweetCount, favoriteCount);
 	}
 
-	public static User getUserObject(JSONObject json) {
-		String id = json.getString("id_str");
-		if (id == null) {
-			Logger.getInstance().log("Event Parser: Could not get id_str from user!");
-			return null;
-		}
+	public static User getUserObject(JSONObject json) throws JSONException {
+		Object idObject = json.get("id");
+		String id;
+		if (idObject instanceof String)
+			id = (String) idObject;
+		else if (idObject instanceof Integer)
+			id = Integer.toString((int) idObject);
+		else if (idObject instanceof Long)
+			id = Long.toString((long) idObject);
+		else
+			throw new JSONException("ID is something else: " + idObject.getClass().getName());
+		
 		String screenName = json.getString("screen_name");
-		if (screenName == null) {
-			Logger.getInstance().log("Event Parser: Could not get screenName from user!");
-			return null;
-		}
-		String followersCount = json.getString("followers_count");
-		if (followersCount == null) {
-			Logger.getInstance().log("Event Parser: Could not get followers_count from user!");
-			return null;
-		}
+		String followersCount = Long.toString(json.getLong("followers_count"));
 		return new User(id, screenName, followersCount);
+	}
+
+	public static User[] getMentions(JSONArray array) {
+		User[] mentions = new User[array.length()];
+		for (int i = 0; i < array.length(); i++) {
+			JSONObject mention = (JSONObject) array.get(i);
+			String screenName = mention.getString("screen_name");
+			String id = mention.getString("id_str");
+			mentions[i] = new User(id, screenName, "0");
+		}
+		return mentions;
 	}
 
 }

@@ -10,9 +10,6 @@ import com.github.scribejava.core.model.Response;
 import com.github.scribejava.core.model.Verb;
 import com.github.scribejava.core.oauth.OAuth10aService;
 
-import everyst.analytics.listner.KeyManager;
-import everyst.analytics.listner.dataManagement.queueWriter.FileConstants;
-
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
 
@@ -26,12 +23,14 @@ public abstract class AddSubscription {
 
 	public static void main(String... args) throws IOException, InterruptedException, ExecutionException {
 		// Read api key
-		KeyManager key = new KeyManager();
-		key.readKeys(FileConstants.KEY_FILE);
-
-		final OAuth10aService service = new ServiceBuilder(key.getConsumerKey()).apiSecret(key.getConsumerSecret())
-				.build(TwitterApi.instance());
 		final Scanner in = new Scanner(System.in);
+		System.out.println("ConsumerKey: ");
+		String consumerKey = in.nextLine();
+
+		System.out.println("Secret: ");
+		String secret = in.nextLine();
+
+		final OAuth10aService service = new ServiceBuilder(consumerKey).apiSecret(secret).build(TwitterApi.instance());
 
 		// Obtain the Request Token
 		System.out.println("Fetching the Request Token...");

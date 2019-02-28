@@ -55,6 +55,8 @@ public class FileManager {
 	public void moveActiveToOld() {
 		try {
 			// rename the active file to a name which is unique
+			if (!activeFile.exists())
+				return;
 			Files.move(activeFile, new File(root, new Date().getTime() + ""));
 			activeFile.createNewFile();
 		} catch (IOException e) {
