@@ -88,12 +88,14 @@ public class App {
 		stringWorker.start();
 		eventWorker.start();
 
+		System.out.println("started!");
+
 		// Init the ui
 		ui = new UserInterface(this);
 		new Thread(ui).start();
-
-		System.out.println("started!");
-
+	}
+	
+	public void readStrings(Type type) {		
 		reader.addAllStrings(Type.ALL, 0);
 	}
 

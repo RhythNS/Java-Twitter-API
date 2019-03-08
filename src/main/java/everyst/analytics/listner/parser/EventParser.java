@@ -25,6 +25,10 @@ public abstract class EventParser {
 	public static void addAll(ArrayList<Event> events, String json) {
 		JSONObject base = new JSONObject(json);
 
+		/**
+		 * This is a very ugly solution, I know
+		 */
+
 		JSONArray array = null;
 		try {
 			array = JSONUtil.getArray("favorite_events", base);
@@ -33,7 +37,7 @@ public abstract class EventParser {
 		if (array != null)
 			for (int i = 0; i < array.length(); i++)
 				events.add(new FavoriteEvent(json, array.getJSONObject(i)));
-		
+
 		array = null;
 		try {
 			array = JSONUtil.getArray("follow_events", base);
@@ -43,7 +47,7 @@ public abstract class EventParser {
 		if (array != null)
 			for (int i = 0; i < array.length(); i++)
 				events.add(new FollowEvent(json, array.getJSONObject(i)));
-		
+
 		array = null;
 		try {
 			array = JSONUtil.getArray("block_events", base);
@@ -53,7 +57,7 @@ public abstract class EventParser {
 
 		} catch (JSONException e) {
 		}
-		
+
 		array = null;
 		try {
 			array = JSONUtil.getArray("mute_events", base);
@@ -62,7 +66,7 @@ public abstract class EventParser {
 		if (array != null)
 			for (int i = 0; i < array.length(); i++)
 				events.add(new MuteEvent(json, array.getJSONObject(i)));
-		
+
 		array = null;
 		try {
 			array = JSONUtil.getArray("tweet_delete_events", base);
@@ -71,7 +75,7 @@ public abstract class EventParser {
 		if (array != null)
 			for (int i = 0; i < array.length(); i++)
 				events.add(new TweetDeleteEvent(json, array.getJSONObject(i)));
-		
+
 		array = null;
 		try {
 			array = JSONUtil.getArray("tweet_create_events", base);
@@ -80,9 +84,27 @@ public abstract class EventParser {
 		if (array != null)
 			for (int i = 0; i < array.length(); i++)
 				events.add(new TweetCreateEvent(json, array.getJSONObject(i)));
-		
-		if (events.isEmpty())
+
+		if (events.isEmpty()) {
+			// if there are any events which we ignore simply return otherwise throw a
+			// JSONException
+			try {
+				array = JSONUtil.getArray("direct_message_events", base);
+				if (array != null)
+					return;
+
+				array = JSONUtil.getArray("direct_message_indicate_typing_events", base);
+				if (array != null)
+					return;
+
+				array = JSONUtil.getArray("direct_message_mark_read_events", base);
+				if (array != null)
+					return;
+			} catch (JSONException e) {
+			}
+
 			throw new JSONException("No events found!");
+		}
 	}
 
 	public static Tweet getTweetObject(JSONObject json) throws JSONException {
@@ -98,7 +120,7 @@ public abstract class EventParser {
 			return null;
 
 		LocalDateTime createdAt = EventUtil.getTime(json, "created_at");
-		
+
 		String text = json.getString("text");
 		return new Tweet(id, user, createdAt, text, engagement);
 	}
@@ -122,7 +144,7 @@ public abstract class EventParser {
 			id = Long.toString((long) idObject);
 		else
 			throw new JSONException("ID is something else: " + idObject.getClass().getName());
-		
+
 		String screenName = json.getString("screen_name");
 		String followersCount = Long.toString(json.getLong("followers_count"));
 		return new User(id, screenName, followersCount);
