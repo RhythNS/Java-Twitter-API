@@ -18,6 +18,7 @@ import everyst.analytics.listner.twitter.events.Event;
 import everyst.analytics.listner.userInterface.UserInterface;
 import everyst.analytics.listner.webhook.Webhook;
 import everyst.analytics.mysql.MySQLConnection;
+import everyst.analytics.webInterface.SimpleNumberOutput;
 
 public class App {
 
@@ -36,11 +37,14 @@ public class App {
 	private MySQLConnection database;
 
 	private boolean exitRequested = false;
-	public static final boolean DEBUG = true;
+	public static final boolean DEBUG = false;
 	public static final boolean SERVER_PROTOCOL_DEBUG = false;
 
 	public App(boolean createTables) {
 		Logger.getInstance().log("now starting...");
+
+		if (DEBUG)
+			Logger.getInstance().log("WARNING: SERVER IS RUNNING IN DEBUG MODE!");
 
 		// Init the keys
 		keyManager = new KeyManager();
@@ -82,6 +86,9 @@ public class App {
 			System.exit(0);
 		}
 
+		// Add listners to the webhook
+		webhook.addListner(new SimpleNumberOutput(database));
+
 		// Init the workers
 		stringWorker = new StringWorker(stringQueue, eventQueue, this, writer, 10);
 		eventWorker = new EventWorker(eventQueue, this, database, writer, 10);
@@ -94,8 +101,8 @@ public class App {
 		ui = new UserInterface(this);
 		new Thread(ui).start();
 	}
-	
-	public void readStrings(Type type) {		
+
+	public void readStrings(Type type) {
 		reader.addAllStrings(Type.ALL, 0);
 	}
 

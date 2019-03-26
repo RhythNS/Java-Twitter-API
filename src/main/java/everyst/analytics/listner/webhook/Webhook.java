@@ -1,6 +1,7 @@
 package everyst.analytics.listner.webhook;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -18,6 +19,7 @@ public class Webhook extends NanoHTTPD {
 
 	private CRCResponse crcResponse;
 	private Queue<String> jsonQueue;
+	private ArrayList<URLListner> listners;
 
 	public Webhook(BlockingQueue<String> stringQueue, KeyManager keymanager) {
 		// Init the Webhook with the Server Hostname and port
@@ -25,6 +27,7 @@ public class Webhook extends NanoHTTPD {
 
 		this.jsonQueue = stringQueue;
 		crcResponse = new CRCResponse(keymanager);
+		listners = new ArrayList<>();
 
 		// Enable required SSLProtocols
 		System.setProperty("sslEnabledProtocols", "TLSv1.2,TLSv1.1,TLSv1");
@@ -36,10 +39,28 @@ public class Webhook extends NanoHTTPD {
 
 	public void start(String password) throws IOException {
 		// Passes keystore.jks which should be next to the jar to Nanohttpd
-		makeSecure(NanoHTTPD.makeSSLSocketFactory("/keystore.jks", password.toCharArray()), null);
+		if (!App.DEBUG)
+			makeSecure(NanoHTTPD.makeSSLSocketFactory("/keystore.jks", password.toCharArray()), null);
 
 		// Start the internal server thread
 		start(NanoHTTPD.SOCKET_READ_TIMEOUT, false);
+	}
+
+	public boolean addListner(URLListner listner) {
+		if (listner.getPath().length() == 0) {
+			Logger.getInstance().log("Webhook Error: Can not add listner. Root is not allowed!");
+		}
+
+		// Check if the path is already in the listners ArrayList
+		for (URLListner list : listners) {
+			if (list.getPath().equals(listner.getPath())) {
+				Logger.getInstance().log("Webhook Error: Can not add listner. Already listening to that path");
+				return false;
+			}
+		}
+
+		// If every error was checked add it to the list
+		return listners.add(listner);
 	}
 
 	@Override
@@ -49,6 +70,12 @@ public class Webhook extends NanoHTTPD {
 		Object crc = parameters.get(WebConstants.CRC_TOKEN_REQUEST_PARAMETER_KEY);
 		if (crc != null) // is a crc challenge -> return the answer
 			return doCRCCheck((String) crc);
+
+		// check if we are listing to the url and return another page if yes
+		for (URLListner listner : listners) {
+			if (listner.isPath(session.getUri()))
+				return listner.getResponse(parameters);
+		}
 
 		// If it was a post or put method get the content
 		Map<String, String> files = new HashMap<String, String>();
@@ -66,6 +93,7 @@ public class Webhook extends NanoHTTPD {
 			jsonQueue.add(entry.getValue());
 		}
 
+		// if we did not run into any problems we are going to assume that we handled the process
 		return SampleResponses.getOkay();
 	}
 

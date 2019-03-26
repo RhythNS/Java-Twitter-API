@@ -25,7 +25,7 @@ public abstract class QueueWorker<x> extends Thread {
 			try {
 				process(queue.take());
 			} catch (InterruptedException e) {
-				Logger.getInstance().handleError(e);
+				// we only interrupt when we want to close the program. No need to log!
 			}
 		}
 
