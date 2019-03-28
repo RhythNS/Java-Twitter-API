@@ -4,14 +4,13 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
-
 import everyst.analytics.listner.twitter.Tweet;
 import everyst.analytics.listner.twitter.TweetEngagement;
 import everyst.analytics.listner.twitter.User;
 import everyst.analytics.mysql.MySQLConnection;
 
 public class InputTwitterObjects {
-
+	
 	/**
 	 * Tries to input user. Throws SQLException if something went wrong
 	 */
@@ -74,14 +73,14 @@ public class InputTwitterObjects {
 
 			// get the statment for the tweet object
 			statement = connection.getStatement(
-					"INSERT INTO Tweet (ID, FromID, Date, Text, EngagementID) VALUES (?, ?, ?, ?, LAST_INSERT_ID())");
+					"INSERT INTO Tweet (ID, FromID, Date, Text, EngagementID) VALUES (?, ?, ?, ?, LAST_INSERT_ID());");
 
 			// fill the statement
 			statement.setLong(1, Long.parseLong(tweet.getId()));
 			statement.setLong(2, Long.parseLong(tweet.getUser().getId()));
 			statement.setTimestamp(3, Timestamp.valueOf(tweet.getCreatedAt()));
 			statement.setString(4, tweet.getText());
-
+			
 			// execute it
 			connection.execute(statement);
 		} else { // Tweet is not new

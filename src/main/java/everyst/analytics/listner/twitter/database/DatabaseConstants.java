@@ -13,4 +13,6 @@ public class DatabaseConstants {
 	public final static byte RETWEET = 1;
 
 	public final static byte MENTION = 0;
+	
+	public final static int TIMEZONE_GMT_HOUR_DIFFERENCE = 9;
 }

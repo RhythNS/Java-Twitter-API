@@ -46,22 +46,21 @@ public class EventUtil {
 
 		database.execute(statement);
 	}
-	
 
-	public static void userTweetInteraction(MySQLConnection database, Tweet tweet, User user, LocalDateTime time, byte number)
-			throws SQLException {
+	public static void userTweetInteraction(MySQLConnection database, Tweet tweet, User user, LocalDateTime time,
+			byte number) throws SQLException {
 		InputTwitterObjects.inputTweet(tweet, database);
 		InputTwitterObjects.inputUser(user, database);
 
-		PreparedStatement statement = database.getStatement(
-				"INSERT INTO User_Interacts_Tweet (TweetID, UseriD, Date, Type) VALUES (?,?,?,?);");
+		PreparedStatement statement = database
+				.getStatement("INSERT INTO User_Interacts_Tweet (TweetID, UseriD, Date, Type) VALUES (?,?,?,?);");
 		statement.setLong(1, Long.parseLong(tweet.getId()));
 		statement.setLong(2, Long.parseLong(user.getId()));
 		statement.setTimestamp(3, Timestamp.valueOf(time));
 		statement.setByte(4, number);
 
 		database.execute(statement);
-		
+
 	}
 
 	public static void tweetTweetInteraction(MySQLConnection database, Tweet source, Tweet target, byte number)
