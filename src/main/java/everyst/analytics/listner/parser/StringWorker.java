@@ -28,7 +28,6 @@ public class StringWorker extends QueueWorker<String> {
 	@Override
 	protected void process(String json) {
 		// Parse the json to an event
-		
 		try {
 			EventParser.addAll(parsedEvents, json);	
 		} catch (JSONException e) {
@@ -62,7 +61,7 @@ public class StringWorker extends QueueWorker<String> {
 	}
 
 	@Override
-	protected void writeToFile(String x, Type type) {
+	public void writeToFile(String x, Type type) {
 		writer.write(x, type);
 	}
 

@@ -18,6 +18,14 @@ import everyst.analytics.listner.twitter.events.Event;
 import everyst.analytics.listner.userInterface.UserInterface;
 import everyst.analytics.listner.webhook.Webhook;
 import everyst.analytics.mysql.MySQLConnection;
+import everyst.analytics.tasks.Task;
+import everyst.analytics.tasks.TaskManager;
+import everyst.analytics.tasks.runnables.DailyFollower;
+import everyst.analytics.tasks.runnables.EventWorkerCrashChecker;
+import everyst.analytics.tasks.runnables.StringWorkerCrashChecker;
+import everyst.analytics.tasks.schedulers.IntervalScheduler;
+import everyst.analytics.tasks.schedulers.OnceADayScheduler;
+import everyst.analytics.telegram.TeleBot;
 import everyst.analytics.webInterface.SimpleNumberOutput;
 
 public class App {
@@ -27,6 +35,7 @@ public class App {
 	private Webhook webhook;
 	private StringWorker stringWorker;
 	private EventWorker eventWorker;
+	private TaskManager taskManager;
 
 	// data
 	private KeyManager keyManager;
@@ -35,22 +44,21 @@ public class App {
 	private FileManager fileManager;
 
 	private MySQLConnection database;
+	private TeleBot teleBot;
 
 	private boolean exitRequested = false;
 	public static final boolean DEBUG = false;
 	public static final boolean SERVER_PROTOCOL_DEBUG = false;
 
 	public App(boolean createTables) {
-		Logger.getInstance().log("now starting...");
-
 		if (DEBUG)
 			Logger.getInstance().log("WARNING: SERVER IS RUNNING IN DEBUG MODE!");
 
 		// Init the keys
 		keyManager = new KeyManager();
 		if (!keyManager.readKeys(FileConstants.KEY_FILE)) {
-			Logger.getInstance().log("Could not read keys! Exiting...");
-			System.exit(0);
+			Logger.getInstance().log("Could not read keys!");
+			throw new IllegalStateException("Could not read keys!");
 		}
 
 		// Init the database
@@ -60,12 +68,12 @@ public class App {
 		} catch (SQLException e1) {
 			Logger.getInstance().log("Could not connect to the database!");
 			Logger.getInstance().handleError(e1);
-			System.exit(0);
+			throw new IllegalStateException("Could not connect to the database!");
 		}
 
 		if (createTables) // if the user wants to create the tables in the database
 			if (!InitDatabase.init(database)) { // could not create the tables
-				System.exit(0);
+				Logger.getInstance().handleError(new IllegalStateException("Database Tables could not be initilized"));
 			}
 
 		// init the queues
@@ -83,7 +91,7 @@ public class App {
 			webhook.start(keyManager.getKeyStorePassword());
 		} catch (IOException e) {
 			Logger.getInstance().handleError(e);
-			System.exit(0);
+			throw new IllegalStateException("Could not initilize the webhook!");
 		}
 
 		// Add listners to the webhook
@@ -95,15 +103,50 @@ public class App {
 		stringWorker.start();
 		eventWorker.start();
 
-		System.out.println("started!");
+		// Init task manager
+		taskManager = new TaskManager(this);
+		// add DailyFollower
+		taskManager.addTask(new Task("DailyFollower", new DailyFollower(FileConstants.DAILY_FOLLOWER_FILE),
+				new OnceADayScheduler(1, 0, 0, 1)));
+
+		// add string crash checker which checks every minute
+		taskManager.addTask(new Task("StringWorkerCrashChecker",
+				new StringWorkerCrashChecker(this, stringWorker, stringQueue, eventQueue, writer, 10),
+				new IntervalScheduler(0, 0, 1, 0)));
+
+		// add event crash checker which checks every minute
+		taskManager.addTask(new Task("EventWorkerCrashChecker",
+				new EventWorkerCrashChecker(this, eventWorker, eventQueue, database, writer, 10),
+				new IntervalScheduler(0, 0, 1, 0)));
+		taskManager.start();
+
+		// init Telegram Communication
+		teleBot = new TeleBot(keyManager.getTelegramUsername(), keyManager.getTelegramToken(),
+				keyManager.getTelegramTrustedIds());
+		Logger.getInstance().setBot(teleBot);
 
 		// Init the ui
 		ui = new UserInterface(this);
 		new Thread(ui).start();
+
+		// Everything started, we should be good to go
+		Logger.getInstance().log("App started!");
 	}
 
 	public void readStrings(Type type) {
 		reader.addAllStrings(Type.ALL, 0);
+	}
+
+	public void setStringWorker(StringWorker stringWorker) {
+		this.stringWorker = stringWorker;
+	}
+
+	public void setEventWorker(EventWorker eventWorker) {
+		this.eventWorker = eventWorker;
+	}
+
+	public TaskManager getTaskManager() {
+		return taskManager;
 	}
 
 	/**

@@ -12,6 +12,6 @@ public interface URLListner {
 
 	public String getPath();
 
-	public Response getResponse(Map<String, String> parameters);
+	public Response getResponse(Map<String, String> parameters, Map<String, String> files);
 
 }

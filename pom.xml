@@ -29,11 +29,12 @@
 			<artifactId>commons-codec</artifactId>
 			<version>1.9</version>
 		</dependency>
-		<dependency>
+		<!--<dependency>
 			<groupId>com.google.guava</groupId>
 			<artifactId>guava</artifactId>
-			<version>r05</version>
-		</dependency>
+			<version>27.1-jre</version>
+			 <version>r05</version> 
+		</dependency>-->
 		<dependency>
 			<groupId>com.github.scribejava</groupId>
 			<artifactId>scribejava-apis</artifactId>
@@ -43,6 +44,11 @@
 			<groupId>mysql</groupId>
 			<artifactId>mysql-connector-java</artifactId>
 			<version>8.0.15</version>
+		</dependency>
+		<dependency>
+			<groupId>org.telegram</groupId>
+			<artifactId>telegrambots</artifactId>
+			<version>4.1.2</version>
 		</dependency>
 	</dependencies>
 	<build>

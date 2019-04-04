@@ -70,13 +70,7 @@ public class Webhook extends NanoHTTPD {
 		Object crc = parameters.get(WebConstants.CRC_TOKEN_REQUEST_PARAMETER_KEY);
 		if (crc != null) // is a crc challenge -> return the answer
 			return doCRCCheck((String) crc);
-
-		// check if we are listing to the url and return another page if yes
-		for (URLListner listner : listners) {
-			if (listner.isPath(session.getUri()))
-				return listner.getResponse(parameters);
-		}
-
+		
 		// If it was a post or put method get the content
 		Map<String, String> files = new HashMap<String, String>();
 		Method method = session.getMethod();
@@ -87,6 +81,12 @@ public class Webhook extends NanoHTTPD {
 				Logger.getInstance().handleError(ioe);
 			}
 		} // end post or put method
+
+		// check if we are listing to the url and return another page if yes
+		for (URLListner listner : listners) {
+			if (listner.isPath(session.getUri()))
+				return listner.getResponse(parameters, files);
+		}
 
 		// iterate through the content and add them to the queue to be processed
 		for (Entry<String, String> entry : files.entrySet()) {

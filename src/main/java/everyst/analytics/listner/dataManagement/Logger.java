@@ -6,12 +6,17 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Arrays;
 
+import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
+
+import everyst.analytics.listner.App;
 import everyst.analytics.listner.dataManagement.queueWriter.FileConstants;
 import everyst.analytics.listner.utility.TimeUtility;
+import everyst.analytics.telegram.TeleBot;
 
 public class Logger {
 
 	private static Logger instance;
+	private TeleBot bot;
 
 	public static Logger getInstance() {
 		if (instance == null)
@@ -39,6 +44,10 @@ public class Logger {
 			writer = null;
 		}
 	}
+	
+	public void setBot(TeleBot bot) {
+		this.bot = bot;
+	}
 
 	/**
 	 * Logs a given String to the log file. Only logs if initialization succeeded
@@ -49,7 +58,7 @@ public class Logger {
 		// Check if the writer or the string is null
 		System.out.println(toLog);
 		if (writer != null && toLog != null && !toLog.isEmpty()) {
-
+			
 			// Create the string for logging
 			StringBuilder sb = new StringBuilder();
 			sb.append(TimeUtility.getTime());
@@ -58,10 +67,20 @@ public class Logger {
 
 			// Try to log to file
 			try {
-				writer.write(sb.toString());
+				String lg = sb.toString();
+				writer.write(lg);
 				writer.flush();
+				
+				if (bot != null && !App.DEBUG)
+					bot.sendMessage(lg);
+				
 			} catch (IOException e) {
 				System.err.println("Logger could not log!");
+				e.printStackTrace();
+			} catch (TelegramApiException e) {
+				System.err.println("Logger could not send message!");
+				e.printStackTrace();
+			} catch (Exception e) {
 				e.printStackTrace();
 			}
 		} else {

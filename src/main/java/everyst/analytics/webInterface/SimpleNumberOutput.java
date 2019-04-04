@@ -33,7 +33,7 @@ public class SimpleNumberOutput implements URLListner {
 	 */
 
 	@Override
-	public Response getResponse(Map<String, String> parameters) {
+	public Response getResponse(Map<String, String> parameters, Map<String, String> files) {
 
 		String from = parameters.get("from"), to = parameters.get("to"), account = parameters.get("account");
 

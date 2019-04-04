@@ -1,4 +1,4 @@
-package everyst.analytics.smallHelpers.dailyFollower;
+package everyst.analytics.tasks.runnables;
 
 import java.io.File;
 import java.io.IOException;
@@ -17,16 +17,26 @@ import everyst.analytics.listner.utility.LinuxProcess;
 import everyst.analytics.mysql.MySQLConnection;
 import everyst.analytics.mysql.MySQLDate;
 
-public class DailyFollower {
+public class DailyFollower implements Runnable {
 
 	private String database, user, password;
 	private ArrayList<Long> ids;
+	private File file;
 
-	public void run(File idFile) throws NumberFormatException, IOException, InterruptedException, SQLException {
-		readFile(idFile);
-		String json = recieve(ids);
-		Map<Long, Integer> map = parseJSON(json);
-		addToDatabase(map);
+	public DailyFollower(File file) {
+		this.file = file;
+	}
+
+	@Override
+	public void run() {
+		try {
+			readFile(file);
+			String json = recieve(ids);
+			Map<Long, Integer> map = parseJSON(json);
+			addToDatabase(map);
+		} catch (NumberFormatException | IOException | InterruptedException e) {
+			Logger.getInstance().handleError(e);
+		}
 	}
 
 	public void readFile(File file) throws NumberFormatException, IOException {
@@ -80,9 +90,9 @@ public class DailyFollower {
 		// iterate through the map
 		for (Entry<Long, Integer> entry : map.entrySet()) {
 			// INSERT INTO FollowerCount VALUES ('date', id, count);
-			StringBuilder sb = new StringBuilder("INSERT INTO FollowerCount VALUES ('").append(currentDate)
+			StringBuilder sb = new StringBuilder("INSERT INTO Follower_Count VALUES ('").append(currentDate)
 					.append("', ").append(entry.getKey()).append(", ").append(entry.getValue()).append(");");
-			
+
 			// Finally execute it to the database
 			try {
 				conn.execute(sb.toString());
@@ -94,13 +104,8 @@ public class DailyFollower {
 	}
 
 	public static void main(String[] args) {
-		try {
-			new DailyFollower().run(new File("DailyFollowerInfo"));
-		} catch (NumberFormatException | IOException | InterruptedException | SQLException e) {
-			Logger.getInstance().handleError(e);
-			e.printStackTrace();
-		}
-		;
+		new DailyFollower(new File("DailyFollowerInfo")).run();
+
 	}
 
 }

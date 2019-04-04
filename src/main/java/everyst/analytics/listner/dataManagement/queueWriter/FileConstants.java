@@ -11,6 +11,7 @@ public interface FileConstants {
 	public static final File KEY_FILE = new File(ROOT_DATA_MANAGEMENT_FILE, "keys");
 	public static final File KEYSTORE_FILE = new File(ROOT_DATA_MANAGEMENT_FILE, "keystore.jks");
 	public final static File QUEUE_WRITER_FILE = new File(ROOT_DATA_MANAGEMENT_FILE, "queueWriterFile");
+	public final static File DAILY_FOLLOWER_FILE = new File(ROOT_DATA_MANAGEMENT_FILE, "dailyFollowerInfo");
 
 	public final static String QUEUE_WRITER_LOST_AND_FOUND_FILE_STRING = "LostAndFound";
 	public final static int QUEUE_BYTES_UNTIL_FILE_NEEDS_CLEANING = 10_000_000;

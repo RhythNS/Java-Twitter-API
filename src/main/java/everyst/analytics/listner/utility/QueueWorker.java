@@ -21,24 +21,37 @@ public abstract class QueueWorker<x> extends Thread {
 
 	@Override
 	public void run() {
-		while (!app.isExitRequested()) {
-			try {
-				process(queue.take());
-			} catch (InterruptedException e) {
-				// we only interrupt when we want to close the program. No need to log!
+		try {
+			while (!app.isExitRequested()) {
+				try {
+					if (queue.isEmpty())
+						sleep(2000);
+					else {
+						// I would prefer to use take directly but if the thread crashes the object is
+						// lost. That is why we peek and then take. We know something is in the queue
+						// because we just checked if it is empty
+						process(queue.peek());
+						queue.take();
+					}
+				} catch (InterruptedException e) {
+					// we only interrupt when we want to close the program. No need to log!
+				}
 			}
-		}
 
-		// If the application is supposed to close and there are still objects left,
-		// just write them to file
-		while (!queue.isEmpty()) {
-			try {
-				writeToFile(queue.take(), Type.EXIT);
-			} catch (InterruptedException e) {
-				Logger.getInstance().handleError(e);
+			// If the application is supposed to close and there are still objects left,
+			// just write them to file
+			while (!queue.isEmpty()) {
+				try {
+					writeToFile(queue.take(), Type.EXIT);
+				} catch (InterruptedException e) {
+					Logger.getInstance().handleError(e);
+				}
 			}
+		} catch (Exception e) {
+			// if anything unexcepted happened to our thread log it to file
+			Logger.getInstance().handleError(e);
 		}
-		System.out.println(this.getClass().getSimpleName() + " successfully shut down");
+		Logger.getInstance().log(this.getClass().getSimpleName() + " successfully shut down");
 	}
 
 	/**
@@ -49,6 +62,6 @@ public abstract class QueueWorker<x> extends Thread {
 	/**
 	 * Called when an element is supposed to be written to the file system
 	 */
-	protected abstract void writeToFile(x x, Type type);
+	public abstract void writeToFile(x x, Type type);
 
 }

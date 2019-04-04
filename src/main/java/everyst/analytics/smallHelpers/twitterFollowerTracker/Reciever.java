@@ -15,10 +15,11 @@ public class Reciever {
 
 	private DataManagement dataManagement;
 	private int count;
-	private final String TAB = "\t";
+	private final String TAB = "\t", accountName;
 
-	public Reciever(int count) {
+	public Reciever(int count, String accountName) {
 		this.count = count;
+		this.accountName = accountName;
 		dataManagement = new DataManagement(this);
 	}
 
@@ -34,8 +35,8 @@ public class Reciever {
 		String cursor = "";
 		do {
 
-			String result = LinuxProcess.execute("twurl", "/1.1/followers/ids.json?screen_name=eddieededed&count=" + count
-					+ (cursor.equals("") ? "" : "&cursor=" + cursor));
+			String result = LinuxProcess.execute("twurl", "/1.1/followers/ids.json?screen_name=" + accountName
+					+ "&count=" + count + (cursor.equals("") ? "" : "&cursor=" + cursor));
 
 			// debug to see how big length of the file is or if an error occured print it
 			if (result.length() < 2000)
@@ -128,10 +129,13 @@ public class Reciever {
 		System.out.print("Count (3500 seemed to work): ");
 		Scanner scan = new Scanner(System.in);
 		int count = scan.nextInt();
+		System.out.println("For which account?: ");
+		String accountName = scan.nextLine();
 		scan.close();
+
 		Logger.getInstance().log("Now Running with count: " + count);
 
-		Reciever rec = new Reciever(count);
+		Reciever rec = new Reciever(count, accountName);
 
 		while (true) {
 			try {

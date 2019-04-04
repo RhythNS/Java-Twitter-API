@@ -35,7 +35,7 @@ public class EventWorker extends QueueWorker<Event> {
 	}
 
 	@Override
-	protected void writeToFile(Event x, Type type) {
+	public void writeToFile(Event x, Type type) {
 		writer.write(x.getData(), type);
 	}
 
