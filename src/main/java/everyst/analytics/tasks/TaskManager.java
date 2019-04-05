@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 
 import everyst.analytics.listner.App;
+import everyst.analytics.listner.dataManagement.Logger;
 
 public class TaskManager extends Thread {
 
@@ -64,7 +65,7 @@ public class TaskManager extends Thread {
 			} // end catch exception
 		} // end while exit requested
 
-		System.out.println("TaskManager shut down!");
+		Logger.getInstance().log("TaskManager shut down!");
 	}
 
 }

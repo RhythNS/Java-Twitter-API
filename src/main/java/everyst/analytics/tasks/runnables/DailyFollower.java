@@ -2,6 +2,8 @@ package everyst.analytics.tasks.runnables;
 
 import java.io.File;
 import java.io.IOException;
+import java.sql.Date;
+import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Map;
@@ -15,7 +17,6 @@ import everyst.analytics.listner.dataManagement.Logger;
 import everyst.analytics.listner.utility.JSONUtil;
 import everyst.analytics.listner.utility.LinuxProcess;
 import everyst.analytics.mysql.MySQLConnection;
-import everyst.analytics.mysql.MySQLDate;
 
 public class DailyFollower implements Runnable {
 
@@ -85,17 +86,17 @@ public class DailyFollower implements Runnable {
 		}
 
 		// Save the current date so we only generate it once
-		String currentDate = MySQLDate.getCurrentTime();
+		Date date = new Date(System.currentTimeMillis());
 
 		// iterate through the map
 		for (Entry<Long, Integer> entry : map.entrySet()) {
-			// INSERT INTO FollowerCount VALUES ('date', id, count);
-			StringBuilder sb = new StringBuilder("INSERT INTO Follower_Count VALUES ('").append(currentDate)
-					.append("', ").append(entry.getKey()).append(", ").append(entry.getValue()).append(");");
-
-			// Finally execute it to the database
 			try {
-				conn.execute(sb.toString());
+				PreparedStatement statement = conn
+						.getStatement("INSERT INTO Follower_Count (ID, Date, Followers) VALUES (?,?,?)");
+				statement.setLong(1, entry.getKey());
+				statement.setDate(2, date);
+				statement.setInt(3, entry.getValue());
+				conn.execute(statement);
 			} catch (SQLException e) {
 				Logger.getInstance().log("Could not save to database!");
 				Logger.getInstance().handleError(e);
@@ -104,7 +105,7 @@ public class DailyFollower implements Runnable {
 	}
 
 	public static void main(String[] args) {
-		new DailyFollower(new File("DailyFollowerInfo")).run();
+		new DailyFollower(new File("dailyFollowerInfo")).run();
 
 	}
 

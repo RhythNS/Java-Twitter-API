@@ -5,6 +5,7 @@ import java.sql.SQLException;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import org.telegram.telegrambots.meta.exceptions.TelegramApiRequestException;
 import everyst.analytics.listner.dataManagement.Logger;
 import everyst.analytics.listner.dataManagement.queueWriter.FileConstants;
 import everyst.analytics.listner.dataManagement.queueWriter.FileManager;
@@ -15,6 +16,7 @@ import everyst.analytics.listner.parser.EventWorker;
 import everyst.analytics.listner.parser.StringWorker;
 import everyst.analytics.listner.twitter.database.InitDatabase;
 import everyst.analytics.listner.twitter.events.Event;
+import everyst.analytics.listner.userInterface.Commands;
 import everyst.analytics.listner.userInterface.UserInterface;
 import everyst.analytics.listner.webhook.Webhook;
 import everyst.analytics.mysql.MySQLConnection;
@@ -31,19 +33,21 @@ import everyst.analytics.webInterface.SimpleNumberOutput;
 public class App {
 
 	private UserInterface ui;
+	private Commands commands;
 
 	private Webhook webhook;
+	private KeyManager keyManager;
+
 	private StringWorker stringWorker;
+	private StringWriter writer;
 	private EventWorker eventWorker;
+	private StringReader reader;
+
+	private FileManager fileManager;
+	private MySQLConnection database;
+
 	private TaskManager taskManager;
 
-	// data
-	private KeyManager keyManager;
-	private StringWriter writer;
-	private StringReader reader;
-	private FileManager fileManager;
-
-	private MySQLConnection database;
 	private TeleBot teleBot;
 
 	private boolean exitRequested = false;
@@ -120,9 +124,17 @@ public class App {
 				new IntervalScheduler(0, 0, 1, 0)));
 		taskManager.start();
 
+		// init commands
+		commands = new Commands(database, this);
+
 		// init Telegram Communication
-		teleBot = new TeleBot(keyManager.getTelegramUsername(), keyManager.getTelegramToken(),
-				keyManager.getTelegramTrustedIds());
+		try {
+			teleBot = TeleBot.init(keyManager.getTelegramUsername(), keyManager.getTelegramToken(),
+					keyManager.getTelegramTrustedIds(), commands);
+		} catch (TelegramApiRequestException e) {
+			Logger.getInstance().handleError(e);
+		}
+
 		Logger.getInstance().setBot(teleBot);
 
 		// Init the ui
@@ -149,6 +161,14 @@ public class App {
 		return taskManager;
 	}
 
+	public boolean isEventWorkerAlive() {
+		return eventWorker.isAlive();
+	}
+
+	public boolean isStringWorkerAlive() {
+		return stringWorker.isAlive();
+	}
+
 	/**
 	 * Stops all running Threads and tries to shutdown the server
 	 */
@@ -157,6 +177,7 @@ public class App {
 		webhook.stop();
 		stringWorker.interrupt();
 		eventWorker.interrupt();
+		teleBot.stop();
 	}
 
 	public boolean isExitRequested() {
