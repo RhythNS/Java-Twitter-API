@@ -20,14 +20,16 @@ public class UserInterface implements Runnable {
 	public void run() {
 		while (!app.isExitRequested()) {
 			System.out.println(
-					"---Input Command---\nread - For reading all JSONs in storage\nexit - Exit the program and save all not processed JSONs");
+					"---Input Command---\nread - For reading all JSONs in storage\nrun - run a task in the task manager\nexit - Exit the program and save all not processed JSONs");
 			String request = scan.nextLine();
 			switch (request) {
 			case "exit":
-				app.closeProgram();
+				app.stop();
 				break;
+				
 			case "read":
-				System.out.print("What do you want to read? Options are: " + Arrays.toString(Type.values()).replaceAll("_", ""));
+				System.out.print(
+						"What do you want to read? Options are: " + Arrays.toString(Type.values()).replaceAll("_", ""));
 				request = scan.nextLine();
 
 				boolean found = false;
@@ -40,6 +42,11 @@ public class UserInterface implements Runnable {
 				}
 				if (!found)
 					System.out.println("Value not found!");
+				break;
+				
+			case "run":
+				System.out.println("Which task to execute? " + app.getTaskManager().getTaskNames());
+				app.getTaskManager().forceExecuteTask(scan.nextLine());
 				break;
 			default:
 				System.err.println(request + " is not a valid command!");

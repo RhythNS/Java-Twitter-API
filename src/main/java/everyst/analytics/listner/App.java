@@ -5,6 +5,7 @@ import java.sql.SQLException;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import org.json.JSONException;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiRequestException;
 import everyst.analytics.listner.dataManagement.Logger;
 import everyst.analytics.listner.dataManagement.queueWriter.FileConstants;
@@ -25,6 +26,7 @@ import everyst.analytics.tasks.TaskManager;
 import everyst.analytics.tasks.runnables.DailyFollower;
 import everyst.analytics.tasks.runnables.EventWorkerCrashChecker;
 import everyst.analytics.tasks.runnables.StringWorkerCrashChecker;
+import everyst.analytics.tasks.runnables.twitterFollowerTracker.Reciever;
 import everyst.analytics.tasks.schedulers.IntervalScheduler;
 import everyst.analytics.tasks.schedulers.OnceADayScheduler;
 import everyst.analytics.telegram.TeleBot;
@@ -109,9 +111,6 @@ public class App {
 
 		// Init task manager
 		taskManager = new TaskManager(this);
-		// add DailyFollower
-		taskManager.addTask(new Task("DailyFollower", new DailyFollower(FileConstants.DAILY_FOLLOWER_FILE),
-				new OnceADayScheduler(1, 0, 0, 1)));
 
 		// add string crash checker which checks every minute
 		taskManager.addTask(new Task("StringWorkerCrashChecker",
@@ -122,6 +121,20 @@ public class App {
 		taskManager.addTask(new Task("EventWorkerCrashChecker",
 				new EventWorkerCrashChecker(this, eventWorker, eventQueue, database, writer, 10),
 				new IntervalScheduler(0, 0, 1, 0)));
+
+		try {
+			// add DailyFollower
+			taskManager.addTask(new Task("DailyFollower", new DailyFollower(FileConstants.DAILY_FOLLOWER_FILE),
+					new OnceADayScheduler(1, 0, 0, 1)));
+
+			// add Follower Tracker
+			taskManager.addTask(new Task("FollowerTracker",
+					new Reciever(3500, FileConstants.FOLLOWER_TRACKER_FILE, FileConstants.FOLLOWER_TRACKER_ACCOUNTS),
+					new OnceADayScheduler(1, 0, 0, 1)));
+		} catch (NumberFormatException | JSONException | IOException e) {
+			Logger.getInstance().handleError(e);
+		}
+
 		taskManager.start();
 
 		// init commands
@@ -146,7 +159,7 @@ public class App {
 	}
 
 	public void readStrings(Type type) {
-		reader.addAllStrings(Type.ALL, 0);
+		reader.addAllStrings(type, 0);
 	}
 
 	public void setStringWorker(StringWorker stringWorker) {
@@ -172,7 +185,7 @@ public class App {
 	/**
 	 * Stops all running Threads and tries to shutdown the server
 	 */
-	public void closeProgram() {
+	public void stop() {
 		exitRequested = true;
 		webhook.stop();
 		stringWorker.interrupt();

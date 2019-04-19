@@ -1,26 +1,43 @@
-package everyst.analytics.smallHelpers.twitterFollowerTracker;
+package everyst.analytics.tasks.runnables.twitterFollowerTracker;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Scanner;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import everyst.analytics.listner.utility.JSONUtil;
 import everyst.analytics.listner.utility.LinuxProcess;
 import everyst.analytics.listner.utility.TimeUtility;
 import everyst.analytics.listner.dataManagement.Logger;
 
-public class Reciever {
+public class Reciever implements Runnable {
 
-	private DataManagement dataManagement;
-	private int count;
-	private final String TAB = "\t", accountName;
+	private DataManagement[] dataManagement;
+	private int count, requests;
+	private final String TAB = "\t";
+	private String[] accounts;
 
-	public Reciever(int count, String accountName) {
+	public Reciever(int count, File root, File accountsFile) throws NumberFormatException, IOException, JSONException {
 		this.count = count;
-		this.accountName = accountName;
-		dataManagement = new DataManagement(this);
+		this.accounts = readAccounts(accountsFile);
+		dataManagement = new DataManagement[accounts.length];
+		for (int i = 0; i < accounts.length; i++) {
+			dataManagement[i] = new DataManagement(this, root, accounts[i]);
+		}
+	}
+
+	private String[] readAccounts(File accounts) throws NumberFormatException, IOException, JSONException {
+		JSONObject json = JSONUtil.convert(accounts);
+		JSONArray accountArray = json.getJSONArray("accounts");
+		String[] retArr = new String[accountArray.length()];
+
+		for (int i = 0; i < accountArray.length(); i++) {
+			retArr[i] = (String) accountArray.get(i);
+		}
+
+		return retArr;
 	}
 
 	/**
@@ -30,16 +47,15 @@ public class Reciever {
 	 * @throws InterruptedException
 	 * @throws IOException
 	 */
-	public boolean recieve() throws IOException, InterruptedException {
+	public boolean recieve(String accountName, DataManagement dataManagement) throws IOException, InterruptedException {
 		ArrayList<Long> ids = new ArrayList<>();
 		String cursor = "";
-		do {
-
+		while (true) {
 			String result = LinuxProcess.execute("twurl", "/1.1/followers/ids.json?screen_name=" + accountName
 					+ "&count=" + count + (cursor.equals("") ? "" : "&cursor=" + cursor));
 
 			// debug to see how big length of the file is or if an error occured print it
-			if (result.length() < 2000)
+			if (result.length() < 100)
 				Logger.getInstance().log(result);
 
 			try {
@@ -59,7 +75,12 @@ public class Reciever {
 				Logger.getInstance().handleError(e);
 				return false;
 			}
-		} while (!cursor.equals("0")); // do everything until every id has been added
+
+			madeRequest();
+
+			if (cursor.equals("0"))
+				break;
+		}
 
 		// now we have the ids so send them to the datamanagement
 		dataManagement.recieveIds(ids);
@@ -67,7 +88,7 @@ public class Reciever {
 		return true;
 	}
 
-	public String convertTagsToInformation(ArrayList<Long> tags) {
+	public String convertTagsToInformation(ArrayList<Long> tags) throws InterruptedException {
 		if (tags.isEmpty())
 			return "";
 
@@ -108,7 +129,7 @@ public class Reciever {
 							.append(System.lineSeparator());
 				} // end iterating the JSON
 
-			} catch (IOException | InterruptedException e) {
+			} catch (IOException e) {
 				Logger.getInstance().handleError(e);
 				e.printStackTrace();
 				return null;
@@ -125,27 +146,42 @@ public class Reciever {
 		return informationBuilder.toString();
 	}
 
-	public static void main(String[] args) {
-		System.out.print("Count (3500 seemed to work): ");
-		Scanner scan = new Scanner(System.in);
-		int count = scan.nextInt();
-		System.out.println("For which account?: ");
-		String accountName = scan.nextLine();
-		scan.close();
+	private void madeRequest() throws InterruptedException {
+		if (requests++ > 13) {
+			Thread.sleep(900000);
+			requests = 0;
+		}
+	}
 
-		Logger.getInstance().log("Now Running with count: " + count);
-
-		Reciever rec = new Reciever(count, accountName);
-
-		while (true) {
-			try {
-				if (!rec.recieve())
-					Logger.getInstance().log("Failed!");
-				Thread.sleep(900000);
-			} catch (IOException | InterruptedException e) {
-				Logger.getInstance().handleError(e);
+	@Override
+	public void run() {
+		requests = 0;
+		for (int i = 0; i < accounts.length; i++) {
+			boolean failed = true;
+			for (int tries = 0; tries < 3; tries++) {
+				try {
+					if (recieve(accounts[i], dataManagement[i])) {
+						failed = false;
+						break;
+					} else {
+						requests = 15;
+						madeRequest();
+					}
+				} catch (IOException e) {
+					Logger.getInstance().handleError(e);
+				} catch (InterruptedException e) {
+					Logger.getInstance().log("Followerlist not fully updated!");
+				}
+			}
+			if (failed) {
+				Logger.getInstance().log("Could not get account info for " + accounts[i] + "! Exiting Process!");
+				return;
 			}
 		}
+	}
+
+	public static void main(String[] args) throws NumberFormatException, JSONException, IOException {
+		new Reciever(3500, new File("Testing"), new File("accounts")).run();
 	}
 
 }

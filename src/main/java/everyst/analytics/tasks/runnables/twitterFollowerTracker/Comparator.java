@@ -1,4 +1,4 @@
-package everyst.analytics.smallHelpers.twitterFollowerTracker;
+package everyst.analytics.tasks.runnables.twitterFollowerTracker;
 
 import java.util.ArrayList;
 

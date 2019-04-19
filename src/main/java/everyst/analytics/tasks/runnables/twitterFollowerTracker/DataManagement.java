@@ -1,4 +1,4 @@
-package everyst.analytics.smallHelpers.twitterFollowerTracker;
+package everyst.analytics.tasks.runnables.twitterFollowerTracker;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -15,12 +15,17 @@ public class DataManagement {
 	private File currentIds, unFollowers, newFollowers;
 	private Reciever reciever;
 
-	public DataManagement(Reciever reciever) {
+	public DataManagement(Reciever reciever, File root, String accountName) {
 		this.reciever = reciever;
 
-		currentIds = new File("currentIds.txt");
-		unFollowers = new File("unfollowers.txt");
-		newFollowers = new File("newfollowers.txt");
+		if (!root.exists())
+			root.mkdirs();
+		if (!root.isDirectory())
+			throw new IllegalStateException("Root is not a directory!");
+
+		currentIds = new File(root, accountName + "CurrentIds.txt");
+		unFollowers = new File(root, accountName + "Unfollowers.txt");
+		newFollowers = new File(root, accountName + "Newfollowers.txt");
 		if (!fileCheck(currentIds) || !fileCheck(unFollowers) || !fileCheck(newFollowers))
 			System.exit(-1);
 
@@ -58,8 +63,9 @@ public class DataManagement {
 	 * 
 	 * @param newIds - the ids gotten from the twitter api
 	 * @return success
+	 * @throws InterruptedException
 	 */
-	public boolean recieveIds(ArrayList<Long> newIds) {
+	public boolean recieveIds(ArrayList<Long> newIds) throws InterruptedException {
 		ArrayList<Long> oldIds = null;
 
 		// First load the old ids into ram

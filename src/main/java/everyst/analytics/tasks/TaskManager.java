@@ -46,6 +46,25 @@ public class TaskManager extends Thread {
 		tasks.add(task);
 	}
 
+	public String getTaskNames() {
+		if (tasks.isEmpty())
+			return "[]";
+		StringBuilder sb = new StringBuilder("[").append(tasks.get(0).getName());
+		for (int i = 1; i < tasks.size(); i++) {
+			sb.append(", ").append(tasks.get(i).getName());
+		}
+		sb.append("]");
+		return sb.toString();
+	}
+
+	public void forceExecuteTask(String name) {
+		for (Task task : tasks) {
+			if (task.getName().equals(name)) {
+				new Thread(task).start();
+			}
+		}
+	}
+
 	@Override
 	public void run() {
 		while (!app.isExitRequested()) { // while the server does not want to close

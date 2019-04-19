@@ -13,6 +13,7 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiRequestException;
 import org.telegram.telegrambots.meta.generics.BotSession;
 
+import everyst.analytics.listner.App;
 import everyst.analytics.listner.dataManagement.Logger;
 import everyst.analytics.listner.userInterface.Commands;
 
@@ -23,7 +24,8 @@ public class TeleBot extends TelegramLongPollingBot {
 	private Commands commands;
 	private BotSession session;
 
-	public static TeleBot init(String username, String token, ArrayList<Long> trustedChatIDs, Commands commands) throws TelegramApiRequestException {
+	public static TeleBot init(String username, String token, ArrayList<Long> trustedChatIDs, Commands commands)
+			throws TelegramApiRequestException {
 		ApiContextInitializer.init();
 		TelegramBotsApi botsApi = new TelegramBotsApi();
 		TeleBot teleBot;
@@ -52,12 +54,20 @@ public class TeleBot extends TelegramLongPollingBot {
 		}
 	}
 
-	public void stop() {
-		try {
-			sendMessage("I am shutting down! Just to let you know!");
-		} catch (TelegramApiException e) {
-			Logger.getInstance().handleError(e);
+	public void sendMessage(String message, long... ids) throws TelegramApiException {
+		for (int i = 0; i < ids.length; i++) {
+			SendMessage sendMessage = new SendMessage().setChatId(ids[i]).setText(message);
+			execute(sendMessage);
 		}
+	}
+
+	public void stop() {
+		if (!App.DEBUG)
+			try {
+				sendMessage("I am shutting down! Just to let you know!");
+			} catch (TelegramApiException e) {
+				Logger.getInstance().handleError(e);
+			}
 		session.stop();
 	}
 
@@ -69,7 +79,7 @@ public class TeleBot extends TelegramLongPollingBot {
 
 				// If the user is not trusted tell him he is not allowed to talk to me \(>_<)/
 				if (!trustedChatIDs.contains(message.getChatId())) {
-					sendMessage(Responses.UNKOWN_USER_PERMISSION_DENIED);
+					sendMessage(Responses.UNKOWN_USER_PERMISSION_DENIED, message.getChatId());
 					return;
 				}
 

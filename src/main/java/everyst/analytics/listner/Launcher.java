@@ -13,12 +13,12 @@ public class Launcher {
 			if (args[i].equalsIgnoreCase("ct"))
 				createTables = true;
 		}
-		
 		try {
 			new App(createTables);
 		} catch (Throwable t) {
 			Logger.getInstance().log("App crashed: " + Arrays.toString(t.getStackTrace()));
 		}
+
 	}
 
 }

@@ -8,6 +8,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.Map.Entry;
+
 import java.util.TreeMap;
 
 import org.json.JSONArray;
@@ -85,8 +86,8 @@ public class DailyFollower implements Runnable {
 			return;
 		}
 
-		// Save the current date so we only generate it once
-		Date date = new Date(System.currentTimeMillis());
+		// Save the previous day
+		Date date = new Date(System.currentTimeMillis() - (24 * 60 * 60 * 1000));
 
 		// iterate through the map
 		for (Entry<Long, Integer> entry : map.entrySet()) {
@@ -106,7 +107,6 @@ public class DailyFollower implements Runnable {
 
 	public static void main(String[] args) {
 		new DailyFollower(new File("dailyFollowerInfo")).run();
-
 	}
 
 }
