@@ -23,6 +23,7 @@ public abstract class ResponseConstants {
 			"<option value=\"FromEveryst\">FromEveryst</option>\n" + 
 			"<option value=\"Haunt_Jade\">Jade</option>\n" + 
 			"<option value=\"CagerGabe\">Gabe</option>\n" + 
+			"<option value=\"RW_Lecthel\">Lecthel</option>\n" + 
 			"<option value=\"HMagKohaku\">Kohaku</option>\n" + 
 			"</select> \n" + 
 			"From: <input type=\"date\" name=\"from\">\n" + 

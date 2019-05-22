@@ -62,7 +62,7 @@ public abstract class AddSubscription {
 		System.out.println(response.getBody());
 
 		System.out.println();
-		System.out.println("That's it man! Go and build something awesome with ScribeJava! :)");
+		System.out.println("User added! If the response did not show an error message!");
 		in.close();
 
 	}

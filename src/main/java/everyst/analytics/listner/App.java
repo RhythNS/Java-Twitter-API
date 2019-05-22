@@ -56,7 +56,7 @@ public class App {
 	public static final boolean DEBUG = false;
 	public static final boolean SERVER_PROTOCOL_DEBUG = false;
 
-	public App(boolean createTables) {
+	public App(boolean createTables, boolean makeSecure) {
 		if (DEBUG)
 			Logger.getInstance().log("WARNING: SERVER IS RUNNING IN DEBUG MODE!");
 
@@ -94,7 +94,7 @@ public class App {
 		// Init the webhook
 		webhook = new Webhook(stringQueue, keyManager);
 		try {
-			webhook.start(keyManager.getKeyStorePassword());
+			webhook.start(keyManager.getKeyStorePassword(), makeSecure && !DEBUG);
 		} catch (IOException e) {
 			Logger.getInstance().handleError(e);
 			throw new IllegalStateException("Could not initilize the webhook!");

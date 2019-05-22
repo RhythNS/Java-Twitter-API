@@ -37,9 +37,9 @@ public class Webhook extends NanoHTTPD {
 			System.setProperty("javax.net.debug", "all");
 	}
 
-	public void start(String password) throws IOException {
+	public void start(String password, boolean makeSecure) throws IOException {
 		// Passes keystore.jks which should be next to the jar to Nanohttpd
-		if (!App.DEBUG)
+		if (makeSecure)
 			makeSecure(NanoHTTPD.makeSSLSocketFactory("/keystore.jks", password.toCharArray()), null);
 
 		// Start the internal server thread
